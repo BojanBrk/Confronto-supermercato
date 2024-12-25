@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparatore di Prezzi Supermercato</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            background-color: #4CAF50;
+            color: white;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .highlight {
+            background-color: #dff0d8;
+            font-weight: bold;
+        }
+
+        .print-button {
+            margin: 1rem 0;
+            background-color: #007bff;
+            color: white;
+        }
+
+        .print-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Comparatore di Prezzi Supermercato</h1>
+    </header>
+
+    <div class="container">
+        <h1>Inserisci i prodotti</h1>
+        <form id="price-comparison-form">
+            <div class="form-group">
+                <label for="product">Nome del Prodotto:</label>
+                <input type="text" id="product" placeholder="Inserisci il nome del prodotto">
+            </div>
+            <div class="form-group">
+                <label for="price">Prezzo (€):</label>
+                <input type="number" id="price" step="0.01" placeholder="Inserisci il prezzo">
+            </div>
+            <div class="form-group">
+                <label for="store">Nome del Supermercato:</label>
+                <input type="text" id="store" placeholder="Inserisci il nome del supermercato">
+            </div>
+            <button type="button" onclick="addProduct()">Aggiungi Prodotto</button>
+        </form>
+
+        <table id="product-table">
+            <thead>
+                <tr>
+                    <th>Prodotto</th>
+                    <th>Prezzo (€)</th>
+                    <th>Supermercato</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- I dati verranno inseriti qui dinamicamente -->
+            </tbody>
+        </table>
+
+        <button class="print-button" onclick="printShoppingList()">Stampa Lista della Spesa</button>
+        <h2 id="best-deal" style="text-align: center; color: #4CAF50;"></h2>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Comparatore di Prezzi. Tutti i diritti riservati.</p>
+    </footer>
+
+    <script>
+        const products = [];
+
+        function addProduct() {
+            const product = document.getElementById('product').value;
+            const price = parseFloat(document.getElementById('price').value);
+            const store = document.getElementById('store').value;
+
+            if (!product || isNaN(price) || !store) {
+                alert('Per favore, compila tutti i campi.');
+                return;
+            }
+
+            const tableBody = document.querySelector('#product-table tbody');
+
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${product}</td>
+                <td>${price.toFixed(2)}</td>
+                <td>${store}</td>
+            `;
+
+            tableBody.appendChild(newRow);
+
+            products.push({ product, price, store });
+
+            document.getElementById('product').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('store').value = '';
+
+            updateHighlights();
+        }
+
+        function updateHighlights() {
+            const tableBody = document.querySelector('#product-table tbody');
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => row.classList.remove('highlight'));
+
+            const bestDeals = {};
+
+            products.forEach(({ product, price, store }) => {
+                if (!bestDeals[product] || price < bestDeals[product].price) {
+                    bestDeals[product] = { price, store };
+                }
+            });
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const product = cells[0].innerText;
+                const price = parseFloat(cells[1].innerText);
+
+                if (bestDeals[product] && bestDeals[product].price === price) {
+                    row.classList.add('highlight');
+                }
+            });
+        }
+
+        function printShoppingList() {
+            let summary = "Lista della Spesa\n\n";
+            const storeTotals = {};
+
+            products.forEach(({ product, price, store }) => {
+                if (!storeTotals[store]) {
+                    storeTotals[store] = 0;
+                }
+                storeTotals[store] += price;
+            });
+
+            const bestStore = Object.keys(storeTotals).reduce((prev, curr) => storeTotals[prev] < storeTotals[curr] ? prev : curr);
+
+            summary += `Consiglio: Vai al supermercato '${bestStore}' per risparmiare di più.\n\n`;
+
+            const summaryProducts = products.reduce((acc, { product, price, store }) => {
+                if (!acc[product] || acc[product].price > price) {
+                    acc[product] = { price, store };
+                }
+                return acc;
+            }, {});
+
+            for (const product in summaryProducts) {
+                const { price, store } = summaryProducts[product];
+                summary += `${product}: ${store} a €${price.toFixed(2)}\n`;
+            }
+
+            summary += "\nBuona spesa!";
+            alert(summary);
+        }
+    </script>
+</body>
+</html>
